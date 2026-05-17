@@ -1,54 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hyperbeam Multi-Cursor</title>
-    <style>
-      body { margin: 0; font-family: sans-serif; background: #111; color: white; }
-      #container {
-        width: 100vw;
-        height: 100vh;
-        background: black;
-      }
-      .cursor {
-        position: absolute;
-        width: 32px;
-        height: 32px;
-        pointer-events: none;
-        z-index: 1000;
-        transition: opacity 1s;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="container"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyperbeam Multi-Cursor</title>
+  <style>
+    body { margin: 0; background: #111; color: white; font-family: sans-serif; }
+    #container { width: 100vw; height: 100vh; background: black; }
+    .cursor {
+      position: absolute;
+      font-size: 24px;
+      pointer-events: none;
+      z-index: 9999;
+      text-shadow: 0 0 5px black;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
 
-    <script type="module">
-      import Hyperbeam from "https://unpkg.com/@hyperbeam/web@latest/dist/index.js";
+  <script type="module">
+    import Hyperbeam from "https://unpkg.com/@hyperbeam/web@latest/dist/index.js";
 
-      const container = document.getElementById("container");
+    const container = document.getElementById("container");
 
-      // ←←← CHANGE THIS TO YOUR OWN HYPERBEAM EMBED URL
-      const embedUrl = "https://YOUR-EMBED-URL.hyperbeam.com/....";
+    // ←←← PUT YOUR REAL HYPERBEAM EMBED URL HERE
+    const embedUrl = "https://your-embed-url-here.hyperbeam.com/xxxxxxxx";
 
-      async function main() {
+    async function main() {
+      try {
         const hb = await Hyperbeam(container, embedUrl, {
-          onCursor({ clientX, clientY, userId }) {
+          onCursor({ clientX, clientY, userId, color }) {
             let cursor = document.getElementById("cursor-" + userId);
             if (!cursor) {
               cursor = document.createElement("div");
               cursor.id = "cursor-" + userId;
               cursor.className = "cursor";
-              cursor.innerHTML = "👆";
+              cursor.textContent = "👆";
               document.body.appendChild(cursor);
             }
             cursor.style.left = clientX + "px";
             cursor.style.top = clientY + "px";
+            if (color) cursor.style.color = color;
           }
         });
+        console.log("Hyperbeam loaded successfully!");
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p style="color:red;padding:20px;">Error: ${err.message}<br><br>Make sure you put a valid embed URL.</p>`;
       }
+    }
 
-      main();
-    </script>
-  </body>
+    main();
+  </script>
+</body>
 </html>
