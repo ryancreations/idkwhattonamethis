@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hyperbeam Multi-Cursor</title>
   <style>
-    body { margin: 0; background: #111; color: white; font-family: sans-serif; }
-    #container { width: 100vw; height: 100vh; background: black; }
+    body { margin: 0; background: #0f0f0f; color: white; font-family: Arial, sans-serif; }
+    #container { width: 100vw; height: 100vh; background: #000; }
     .cursor {
       position: absolute;
-      font-size: 24px;
+      font-size: 28px;
       pointer-events: none;
-      z-index: 9999;
-      text-shadow: 0 0 5px black;
+      z-index: 10000;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      transition: transform 0.05s;
     }
   </style>
 </head>
@@ -24,30 +25,28 @@
 
     const container = document.getElementById("container");
 
-    // ←←← PUT YOUR REAL HYPERBEAM EMBED URL HERE
-    const embedUrl = "https://your-embed-url-here.hyperbeam.com/xxxxxxxx";
+    // === PUT YOUR HYPERBEAM EMBED URL HERE ===
+    const embedUrl = "https://YOUR-URL-HERE.hyperbeam.com/xxxxxxx";
 
     async function main() {
       try {
-        const hb = await Hyperbeam(container, embedUrl, {
-          onCursor({ clientX, clientY, userId, color }) {
-            let cursor = document.getElementById("cursor-" + userId);
-            if (!cursor) {
-              cursor = document.createElement("div");
-              cursor.id = "cursor-" + userId;
-              cursor.className = "cursor";
-              cursor.textContent = "👆";
-              document.body.appendChild(cursor);
+        await Hyperbeam(container, embedUrl, {
+          onCursor({ clientX, clientY, userId, color = "#ff0000" }) {
+            let el = document.getElementById("c-" + userId);
+            if (!el) {
+              el = document.createElement("div");
+              el.id = "c-" + userId;
+              el.className = "cursor";
+              el.textContent = "👆";
+              document.body.appendChild(el);
             }
-            cursor.style.left = clientX + "px";
-            cursor.style.top = clientY + "px";
-            if (color) cursor.style.color = color;
+            el.style.left = clientX + "px";
+            el.style.top = clientY + "px";
+            el.style.color = color;
           }
         });
-        console.log("Hyperbeam loaded successfully!");
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = `<p style="color:red;padding:20px;">Error: ${err.message}<br><br>Make sure you put a valid embed URL.</p>`;
+      } catch (e) {
+        container.innerHTML = `<div style="padding:40px;color:red;">Error: ${e.message}<br><br>Check your embed URL.</div>`;
       }
     }
 
