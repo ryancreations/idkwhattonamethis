@@ -1,123 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Hyperbeam AudioContext example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hyperbeam Multi-Cursor</title>
     <style>
-      body {
-        font-family: sans-serif;
+      body { margin: 0; font-family: sans-serif; background: #111; color: white; }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        background: black;
       }
-
-      .toolbar {
-        display: flex;
-
-        justify-content: center;
-        align-items: center;
-      }
-
-      .toolbar > .group {
-        display: flex;
-
-        align-items: center;
-        margin: 0 10px;
-      }
-
-      #cloudComputerDiv {
-        position: fixed;
-        inset: 0;
-        top: 50px;
+      .cursor {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        pointer-events: none;
+        z-index: 1000;
+        transition: opacity 1s;
       }
     </style>
   </head>
-
   <body>
-    <div>
-      <div class="toolbar">
-        <div class="group">
-          Zoom:
-          <input
-            type="range"
-            name="zoom"
-            id="zoom"
-            min="0.1"
-            max="2"
-            value="1"
-            step="0.1"
-          />
-        </div>
-        <div class="group">
-          <input
-            type="radio"
-            id="radio-origin"
-            name="scope"
-            value="per-origin"
-            checked
-          />
-          <label for="radio-origin">per-origin</label>
-        </div>
-        <div class="group">
-          <input type="radio" id="radio-tab" name="scope" value="per-tab" />
-          <label for="radio-tab">per-tab</label>
-        </div>
-      </div>
-      <div id="cloudComputerDiv"></div>
-    </div>
+    <div id="container"></div>
+
     <script type="module">
       import Hyperbeam from "https://unpkg.com/@hyperbeam/web@latest/dist/index.js";
 
+      const container = document.getElementById("container");
+
+      // ←←← CHANGE THIS TO YOUR OWN HYPERBEAM EMBED URL
+      const embedUrl = "https://YOUR-EMBED-URL.hyperbeam.com/....";
+
       async function main() {
-        const resp = await fetch("/computer");
-        const data = await resp.json();
-        const hb = await Hyperbeam(cloudComputerDiv, data.embed_url);
-        const zoomInput = document.getElementById("zoom");
-        const radioBtns = document.getElementsByName("scope");
-        let tabId;
-
-        const zoomFactor = await hb.tabs.getZoom();
-        zoomInput.value = zoomFactor;
-
-        const zoomSettings = await hb.tabs.getZoomSettings();
-        updateZoomScope(zoomSettings.scope);
-
-        for (const radioBtn of radioBtns) {
-          radioBtn.addEventListener("change", setZoomScope);
-        }
-
-        zoomInput.addEventListener("input", (e) => {
-          hb.tabs.setZoom(Number(e.target.value));
-        });
-
-        // Note this function may fire for tabs that are not activated
-        // You should check if the tabIds match
-        hb.tabs.onZoomChange.addListener((info) => {
-          if (!tabId || tabId === info.tabId) {
-            zoomInput.value = info.newZoomFactor;
-            updateZoomScope(info.zoomSettings.scope);
+        const hb = await Hyperbeam(container, embedUrl, {
+          onCursor({ clientX, clientY, userId }) {
+            let cursor = document.getElementById("cursor-" + userId);
+            if (!cursor) {
+              cursor = document.createElement("div");
+              cursor.id = "cursor-" + userId;
+              cursor.className = "cursor";
+              cursor.innerHTML = "👆";
+              document.body.appendChild(cursor);
+            }
+            cursor.style.left = clientX + "px";
+            cursor.style.top = clientY + "px";
           }
         });
-
-        // Note that each tab can have different zoom values and settings
-        hb.tabs.onActivated.addListener(async (info) => {
-          tabId = info.tabId;
-          zoomInput.value = await hb.tabs.getZoom(tabId);
-          const zoomSettings = await hb.tabs.getZoomSettings(tabId);
-          updateZoomScope(zoomSettings.scope);
-        });
-
-        function setZoomScope(e) {
-          hb.tabs.setZoomSettings({
-            // defaultZoomFactor just sets the value returned by getZoomSettings()
-            // https://developer.chrome.com/docs/extensions/reference/tabs/#type-ZoomSettings
-            // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/ZoomSettings
-            defaultZoomFactor: 1.5,
-            scope: e.target.value,
-          });
-        }
-
-        function updateZoomScope(scope) {
-          for (const radioBtn of radioBtns) {
-            radioBtn.checked = scope === radioBtn.value;
-          }
-        }
       }
 
       main();
